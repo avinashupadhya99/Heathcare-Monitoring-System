@@ -1,11 +1,13 @@
 import React, {useEffect, useState} from 'react';
-import {SafeAreaView, ScrollView, Text} from 'react-native';
+import {Picker, SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 
 import Header from './components/Header';
 import Chart from './components/Chart';
 
 const App = () => {
   const [feedValues, setFeedValues] = useState({});
+  const [selectedFeed, setSelectedFeed] = useState('');
+  const [availableFeeds, setAvailableFeeds] = useState([]);
 
   useEffect(() => {
     fetch(
@@ -74,6 +76,8 @@ const App = () => {
         });
         // console.log(feedValue);
         setFeedValues(feedValue);
+        setSelectedFeed(Object.keys(feedValue)[0]);
+        setAvailableFeeds(Object.keys(feedValue));
       })
       .catch(fetchError => {
         console.error(fetchError);
@@ -84,16 +88,26 @@ const App = () => {
     <SafeAreaView>
       <ScrollView contentInsetAdjustmentBehavior="automatic">
         <Header />
-        {Object.keys(feedValues).map((feedValue, index) => (
-          <Chart
-            name={feedValue}
-            feedValues={feedValues[feedValue]}
-            key={index}
-          />
-        ))}
+        <View>
+          <Picker
+            selectedValue={selectedFeed}
+            style={styles.feedDropDown}
+            onValueChange={(feed, itemIndex) => setSelectedFeed(feed)}>
+            {availableFeeds.map((feed, index) => {
+              return <Picker.Item label={feed} value={feed} key={index} />; //if you have a bunch of keys value pair
+            })}
+          </Picker>
+        </View>
+        <Chart name={selectedFeed} feedValues={feedValues[selectedFeed]} />
       </ScrollView>
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  feedDropDown: {
+    height: 50,
+  },
+});
 
 export default App;

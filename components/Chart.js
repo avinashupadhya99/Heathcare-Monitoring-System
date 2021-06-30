@@ -1,5 +1,5 @@
 import React from 'react';
-import {Dimensions, StyleSheet, Text, View, ScrollView} from 'react-native';
+import {StyleSheet, Text, View, ScrollView} from 'react-native';
 import {LineChart} from 'react-native-chart-kit';
 
 const Chart = ({name, feedValues}) => {
@@ -8,7 +8,7 @@ const Chart = ({name, feedValues}) => {
       <Text>{name}</Text>
       <ScrollView
         horizontal={true}
-        contentOffset={{x: 10000, y: 0}} // i needed the scrolling to start from the end not the start
+        contentOffset={{x: feedValues.value.length * 20, y: 0}} // middle of the graph
         showsHorizontalScrollIndicator={false} // to hide scroll bar
       >
         <LineChart

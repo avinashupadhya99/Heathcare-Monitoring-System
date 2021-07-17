@@ -1,14 +1,25 @@
 import React from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import {View, Text, StyleSheet} from 'react-native';
 
 const Header = () => {
   return (
-    <View>
-      <Text>Header</Text>
+    <View style={styles.header}>
+      <Text style={styles.text}>Heathcare Monitoring</Text>
     </View>
   );
 };
 
-const styles = StyleSheet.create();
+const styles = StyleSheet.create({
+  header: {
+    height: 60,
+    padding: 15,
+    backgroundColor: '#fb8c00',
+  },
+  text: {
+    color: 'white',
+    fontSize: 23,
+    textAlign: 'center',
+  },
+});
 
 export default Header;

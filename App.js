@@ -13,20 +13,20 @@ import {CourierClient} from '@trycourier/courier';
 import Header from './components/Header';
 import Chart from './components/Chart';
 
+// To force update the text input (update threshold input)
+function useForceUpdate(){
+  const [value, setValue] = useState(0); // integer state
+  return () => setValue(value => value + 1); // update the state to force render
+}
+
 const App = () => {
   const courier = CourierClient({
     authorizationToken: 'dk_prod_M03WT4ZE6A4B97GK2GCDBG8FBC9G',
   });
-  const [thresholds, setThresholds] = useState({
-    field1: 89,
-    field2: 40,
-    field3: 45,
-    field4: 45,
-    field5: 45,
-  });
+  const [thresholds, setThresholds] = useState([90, 40, 30, 50, 500, 40]);
   const [feedValues, setFeedValues] = useState({});
   const [selectedFeed, setSelectedFeed] = useState('');
-  const [selectedFeedNumber, setSelectedFeedNumber] = useState('field1');
+  const [selectedFeedNumber, setSelectedFeedNumber] = useState(0);
   const [availableFeeds, setAvailableFeeds] = useState([]);
   const [textRef, setTextRef] = useState(null);
 
@@ -46,7 +46,7 @@ const App = () => {
 
   useEffect(() => {
     fetch(
-      'https://api.thingspeak.com/channels/1268340/feeds.json?api_key=RCW348S17GG6FXWT&days=9',
+      'https://api.thingspeak.com/channels/1268340/feeds.json?api_key=RCW348S17GG6FXWT&days=1&round=2',
     )
       .then(feedData => feedData.json())
       .then(feedData => {
@@ -134,7 +134,7 @@ const App = () => {
         setFeedValues(feedValue);
         // Set the first field as the default field
         setSelectedFeed(Object.keys(feedValue)[0]);
-        setSelectedFeedNumber('field1');
+        setSelectedFeedNumber(0);
         setAvailableFeeds(Object.keys(feedValue));
         console.log(feedValues);
       })
@@ -143,14 +143,18 @@ const App = () => {
       });
   }, []);
 
+  // To force update the text input (update threshold input)
+  const forceUpdate = useForceUpdate();
+
   const onChangeNumber = threshold => {
     // textRef.setValue(parseInt(threshold));
-    console.log(textRef);
+    console.log(thresholds);
     console.log(threshold);
     let thresholdsCopy = thresholds;
     thresholdsCopy[selectedFeedNumber] = parseInt(threshold);
     setThresholds(thresholdsCopy);
     console.log(thresholds);
+    forceUpdate();
   };
 
   return (
@@ -165,7 +169,7 @@ const App = () => {
                 style={styles.feedDropDown}
                 onValueChange={(feed, itemIndex) => {
                   setSelectedFeed(feed);
-                  setSelectedFeedNumber(`field${itemIndex + 1}`);
+                  setSelectedFeedNumber(itemIndex);
                 }}>
                 {availableFeeds.map((feed, index) => {
                   return <Picker.Item label={feed} value={feed} key={index} />; //if you have a bunch of keys value pair

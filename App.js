@@ -9,7 +9,6 @@ import {
   View,
 } from 'react-native';
 import BackgroundTimer from 'react-native-background-timer';
-import {CourierClient} from '@trycourier/courier';
 
 import Header from './components/Header';
 import Chart from './components/Chart';
@@ -21,15 +20,11 @@ function useForceUpdate() {
 }
 
 const App = () => {
-  const courier = CourierClient({
-    authorizationToken: 'dk_prod_M03WT4ZE6A4B97GK2GCDBG8FBC9G',
-  });
-  const [thresholds, setThresholds] = useState([90, 40, 30, 50, 500, 40]);
+  const [thresholds, setThresholds] = useState([]);
   const [feedValues, setFeedValues] = useState({});
   const [selectedFeed, setSelectedFeed] = useState('');
   const [selectedFeedNumber, setSelectedFeedNumber] = useState(0);
   const [availableFeeds, setAvailableFeeds] = useState([]);
-  const [textRef, setTextRef] = useState(null);
 
   BackgroundTimer.runBackgroundTimer(() => {
     fetch(
@@ -52,14 +47,6 @@ const App = () => {
             new Date(feed.created_at).toTimeString().substring(0, 5), // Get time in hh:mm
           );
           feedValue[feedData.channel.field1].value.push(feed.field1);
-          if (feed.field1 > thresholds.field1) {
-            sendNotification({
-              feed: feedData.channel.field1,
-              threshold: thresholds.field1,
-              feedValue: feed.field1,
-              dateTime: new Date(feed.created_at).toString(),
-            });
-          }
           // Body Temperature Sensor (LM35)
           if (feedValue[feedData.channel.field2] === undefined) {
             // Initialize
@@ -72,14 +59,6 @@ const App = () => {
             new Date(feed.created_at).toTimeString().substring(0, 5), // Get time in hh:mm
           );
           feedValue[feedData.channel.field2].value.push(feed.field2);
-          if (feed.field2 > thresholds.field2) {
-            sendNotification({
-              feed: feedData.channel.field2,
-              threshold: thresholds.field2,
-              feedValue: feed.field2,
-              dateTime: new Date(feed.created_at).toString(),
-            });
-          }
           // Room Temperature Sensor (DHT11)
           if (feedValue[feedData.channel.field3] === undefined) {
             // Initialize
@@ -128,20 +107,6 @@ const App = () => {
       });
   }, 30000);
 
-  const sendNotification = async data => {
-    const {messageId} = await courier.send({
-      eventId: 'RQEBE9G9YV42DKMJFF5NW9Q1Q4PT',
-      recipientId: 'ed52d3a4-f19c-4913-97e8-e8306d17d823',
-      profile: {
-        email: 'avinashupadhya99@gmail.com',
-        phone_number: '+919481029088',
-      },
-      data: data,
-      override: {},
-    });
-    console.log(messageId);
-  };
-
   useEffect(() => {
     fetch(
       'https://api.thingspeak.com/channels/1268340/feeds.json?api_key=RCW348S17GG6FXWT&days=1&round=2',
@@ -163,14 +128,6 @@ const App = () => {
             new Date(feed.created_at).toTimeString().substring(0, 5), // Get time in hh:mm
           );
           feedValue[feedData.channel.field1].value.push(feed.field1);
-          if (feed.field1 > thresholds.field1) {
-            sendNotification({
-              feed: feedData.channel.field1,
-              threshold: thresholds.field1,
-              feedValue: feed.field1,
-              dateTime: new Date(feed.created_at).toString(),
-            });
-          }
           // Body Temperature Sensor (LM35)
           if (feedValue[feedData.channel.field2] === undefined) {
             // Initialize
@@ -183,14 +140,6 @@ const App = () => {
             new Date(feed.created_at).toTimeString().substring(0, 5), // Get time in hh:mm
           );
           feedValue[feedData.channel.field2].value.push(feed.field2);
-          if (feed.field2 > thresholds.field2) {
-            sendNotification({
-              feed: feedData.channel.field2,
-              threshold: thresholds.field2,
-              feedValue: feed.field2,
-              dateTime: new Date(feed.created_at).toString(),
-            });
-          }
           // Room Temperature Sensor (DHT11)
           if (feedValue[feedData.channel.field3] === undefined) {
             // Initialize
@@ -239,6 +188,10 @@ const App = () => {
       .catch(fetchError => {
         console.error(fetchError);
       });
+    // Fetch thresholds value
+    fetch('http://35.238.20.42/')
+      .then(response => response.json())
+      .then(data => setThresholds(data));
   }, []);
 
   // To force update the text input (update threshold input)
@@ -250,6 +203,14 @@ const App = () => {
     console.log(threshold);
     let thresholdsCopy = thresholds;
     thresholdsCopy[selectedFeedNumber] = parseInt(threshold);
+    const requestOptions = {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({threshold: threshold, field: selectedFeedNumber}),
+    };
+    fetch('http://35.238.20.42/', requestOptions).then(response =>
+      console.log(response),
+    );
     setThresholds(thresholdsCopy);
     console.log(thresholds);
     forceUpdate();
@@ -275,20 +236,23 @@ const App = () => {
               </Picker>
             </View>
             <Chart name={selectedFeed} feedValues={feedValues[selectedFeed]} />
-            <View>
-              <Text style={styles.updateText}>
-                Update threshold for{' '}
-                <Text style={styles.updateTextFeedName}>{selectedFeed}</Text>
-              </Text>
-              <TextInput
-                style={styles.updateThresholdInput}
-                ref={ref => setTextRef(ref)}
-                onChangeText={onChangeNumber}
-                value={thresholds[selectedFeedNumber].toString()}
-                placeholder="Threshold"
-                keyboardType="numeric"
-              />
-            </View>
+            {thresholds.length > 0 ? (
+              <View>
+                <Text style={styles.updateText}>
+                  Update threshold for{' '}
+                  <Text style={styles.updateTextFeedName}>{selectedFeed}</Text>
+                </Text>
+                <TextInput
+                  style={styles.updateThresholdInput}
+                  onChangeText={onChangeNumber}
+                  value={thresholds[selectedFeedNumber].toString()}
+                  placeholder="Threshold"
+                  keyboardType="numeric"
+                />
+              </View>
+            ) : (
+              <View />
+            )}
           </>
         ) : (
           <View>

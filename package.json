@@ -13,6 +13,7 @@
     "@trycourier/courier": "^2.3.0",
     "react": "17.0.1",
     "react-native": "0.64.2",
+    "react-native-background-timer": "^2.4.1",
     "react-native-chart-kit": "^6.11.0",
     "react-native-svg": "^12.1.1",
     "react-native-vector-icons": "^8.1.0",
